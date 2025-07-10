@@ -16,6 +16,9 @@ try:
     for window_name, categories in config.window_categories.items():
         window_id = window_name[-1]
         print(f"  窗口{window_id}: {', '.join(categories)}")
+    print(f"🔥 独占显示模式: {'启用' if config.exclusive_display else '禁用'}")
+    if config.exclusive_display:
+        print(f"📋 优先级顺序: {' -> '.join(config.exclusive_priority)}")
 except ImportError:
     print("⚠ 配置文件未找到，请检查config.py文件")
 
@@ -63,11 +66,11 @@ def create_demo_image():
     cv2.putText(demo_image, "Press 'q' to exit, 's' to save", (50, 320),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     
-    cv2.putText(demo_image, "Press '1', '2', '3' to switch windows", (50, 360),
+    cv2.putText(demo_image, "Press 'e' to toggle exclusive mode", (50, 400),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     
     # 绘制一些装饰性的框
-    cv2.rectangle(demo_image, (30, 30), (610, 400), (100, 100, 100), 2)
+    cv2.rectangle(demo_image, (30, 30), (610, 420), (100, 100, 100), 2)
     
     return demo_image
 
@@ -142,7 +145,7 @@ def main():
     print("🎯 YOLOv8 三窗口检测演示程序")
     print("=" * 60)
     
-    choice = input("选择演示模式:\n1. 测试分类逻辑\n2. 三窗口演示\n3. 启动实时检测\n请输入选择 (1-3): ")
+    choice = input("选择演示模式:\n1. 测试分类逻辑\n2. 三窗口演示\n3. 启动实时检测\n4. 测试独占模式\n请输入选择 (1-4): ")
     
     if choice == "1":
         test_categorization()
@@ -150,6 +153,17 @@ def main():
         demo_multi_window()
     elif choice == "3":
         print("\n🚀 启动实时三窗口检测...")
+        from yolo_webcam import YoloV8Detector
+        detector = YoloV8Detector()
+        detector.run_webcam()
+    elif choice == "4":
+        print("\n🔥 独占模式说明:")
+        print("- 当窗口1检测到目标时，窗口2和3显示黑屏")
+        print("- 当窗口2检测到目标时，窗口1和3显示黑屏")
+        print("- 当窗口3检测到目标时，窗口1和2显示黑屏")
+        print("- 按 'e' 键可以切换独占模式开关")
+        print("- 多个窗口同时检测时，按优先级显示")
+        input("按回车键继续...")
         from yolo_webcam import YoloV8Detector
         detector = YoloV8Detector()
         detector.run_webcam()

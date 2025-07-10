@@ -48,3 +48,9 @@ window_positions = {
     "window2": (700, 50),
     "window3": (350, 400)
 }
+
+# 独占显示设置
+exclusive_display = True  # 是否启用独占显示模式
+exclusive_priority = ["window1", "window2", "window3"]  # 优先级顺序，当多个窗口都有检测时的显示优先级
+black_screen_text = "No Detection"  # 黑屏时显示的文本
+show_waiting_message = True  # 是否在黑屏时显示等待消息

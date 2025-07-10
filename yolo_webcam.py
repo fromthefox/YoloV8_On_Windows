@@ -27,6 +27,11 @@ try:
     WINDOW_CATEGORIES = config.window_categories
     WINDOW_TITLES = config.window_titles
     WINDOW_POSITIONS = config.window_positions
+    # 独占显示设置
+    EXCLUSIVE_DISPLAY = config.exclusive_display
+    EXCLUSIVE_PRIORITY = config.exclusive_priority
+    BLACK_SCREEN_TEXT = config.black_screen_text
+    SHOW_WAITING_MESSAGE = config.show_waiting_message
     print("✓ 配置文件加载成功")
 except ImportError:
     # 使用默认设置
@@ -61,6 +66,11 @@ except ImportError:
         "window2": (700, 50),
         "window3": (350, 400)
     }
+    # 默认独占显示设置
+    EXCLUSIVE_DISPLAY = True
+    EXCLUSIVE_PRIORITY = ["window1", "window2", "window3"]
+    BLACK_SCREEN_TEXT = "No Detection"
+    SHOW_WAITING_MESSAGE = True
     print("⚠ 配置文件未找到，使用默认设置")
 
 
@@ -211,6 +221,78 @@ class YoloV8Detector:
         cv2.putText(frame, label, (x1, y1 - 5),
                    cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE * 0.5, (255, 255, 255), LINE_THICKNESS)
         
+    def create_black_screen(self, width, height, window_name):
+        """
+        创建黑屏图像
+        
+        Args:
+            width: 图像宽度
+            height: 图像高度
+            window_name: 窗口名称
+            
+        Returns:
+            black_screen: 黑屏图像
+        """
+        # 创建黑色背景
+        black_screen = np.zeros((height, width, 3), dtype=np.uint8)
+        
+        if SHOW_WAITING_MESSAGE:
+            # 添加等待消息
+            window_id = window_name[-1]
+            
+            # 主要文本
+            main_text = f"Window {window_id}"
+            text_size = cv2.getTextSize(main_text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)[0]
+            text_x = (width - text_size[0]) // 2
+            text_y = height // 2 - 60
+            cv2.putText(black_screen, main_text, (text_x, text_y),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1.0, (100, 100, 100), 2)
+            
+            # 状态文本
+            status_text = BLACK_SCREEN_TEXT
+            text_size = cv2.getTextSize(status_text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
+            text_x = (width - text_size[0]) // 2
+            text_y = height // 2 - 20
+            cv2.putText(black_screen, status_text, (text_x, text_y),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (80, 80, 80), 2)
+            
+            # 等待图标 (简单的圆点)
+            center_x = width // 2
+            center_y = height // 2 + 30
+            cv2.circle(black_screen, (center_x, center_y), 10, (60, 60, 60), -1)
+            
+            # 显示当前时间
+            import time
+            current_time = time.strftime("%H:%M:%S")
+            time_text = f"Time: {current_time}"
+            text_size = cv2.getTextSize(time_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)[0]
+            text_x = (width - text_size[0]) // 2
+            text_y = height - 30
+            cv2.putText(black_screen, time_text, (text_x, text_y),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (60, 60, 60), 1)
+        
+        return black_screen
+        
+    def determine_active_window(self, window_results):
+        """
+        确定应该显示哪个窗口（独占显示模式）
+        
+        Args:
+            window_results: 各窗口的检测结果
+            
+        Returns:
+            str: 活跃窗口名称，如果没有检测则返回None
+        """
+        if not EXCLUSIVE_DISPLAY:
+            return None  # 非独占模式，所有窗口都显示
+        
+        # 按优先级检查哪个窗口有检测结果
+        for window_name in EXCLUSIVE_PRIORITY:
+            if window_name in window_results and len(window_results[window_name]["detections"]) > 0:
+                return window_name
+        
+        return None  # 没有任何窗口有检测结果
+        
     def detect(self, frame):
         """
         对单帧图像进行目标检测
@@ -290,11 +372,18 @@ class YoloV8Detector:
         print("  窗口3: 电脑(laptop)、键盘(keyboard)、电视(tv)、鼠标(mouse)、遥控器(remote)")
         print("  其他类别: 随机分配到三个窗口")
         print("=" * 60)
+        if EXCLUSIVE_DISPLAY:
+            print("🔥 独占显示模式:")
+            print("  - 只有检测到目标的窗口才会显示图像")
+            print("  - 其他窗口显示黑屏等待状态")
+            print("  - 优先级顺序:", " -> ".join(EXCLUSIVE_PRIORITY))
+            print("=" * 60)
         print("🎮 操作说明:")
         print("  - 按 'q' 键退出")
         print("  - 按 's' 键保存所有窗口的当前帧")
         print("  - 按 'c' 键清除控制台")
         print("  - 按 '1', '2', '3' 键切换窗口焦点")
+        print("  - 按 'e' 键切换独占显示模式")
         print("=" * 60)
         
         # 创建三个窗口
@@ -314,6 +403,9 @@ class YoloV8Detector:
         # 统计变量
         total_detections = {"window1": 0, "window2": 0, "window3": 0}
         
+        # 独占显示模式的动态变量
+        current_exclusive_mode = EXCLUSIVE_DISPLAY
+        
         try:
             while True:
                 ret, frame = cap.read()
@@ -331,6 +423,9 @@ class YoloV8Detector:
                 # 进行多窗口目标检测
                 window_results = self.detect_multi_window(frame)
                 
+                # 确定活跃窗口（独占显示模式）
+                active_window = self.determine_active_window(window_results) if current_exclusive_mode else None
+                
                 # 计算FPS
                 current_time = time.time()
                 frame_count += 1
@@ -343,28 +438,57 @@ class YoloV8Detector:
                 
                 # 在每个窗口上添加信息并显示
                 for window_name, result in window_results.items():
-                    annotated_frame = result["frame"]
-                    detections = result["detections"]
+                    # 判断当前窗口是否应该显示实际图像
+                    if current_exclusive_mode:
+                        if active_window and window_name == active_window:
+                            # 显示检测结果
+                            annotated_frame = result["frame"]
+                            detections = result["detections"]
+                        else:
+                            # 显示黑屏
+                            annotated_frame = self.create_black_screen(FRAME_WIDTH, FRAME_HEIGHT, window_name)
+                            detections = []
+                    else:
+                        # 非独占模式，显示所有窗口
+                        annotated_frame = result["frame"]
+                        detections = result["detections"]
                     
                     # 添加窗口信息
                     info_y = 30
                     
                     # 显示FPS
                     if SHOW_FPS and fps > 0:
+                        color = (0, 255, 0) if not current_exclusive_mode or window_name == active_window else (100, 100, 100)
                         cv2.putText(annotated_frame, f'FPS: {fps:.1f}', (10, info_y),
-                                  cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE * 0.7, (0, 255, 0), LINE_THICKNESS)
+                                  cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE * 0.7, color, LINE_THICKNESS)
                         info_y += 30
                     
                     # 显示当前窗口检测数量
                     if SHOW_COUNT:
+                        color = (0, 255, 0) if not current_exclusive_mode or window_name == active_window else (100, 100, 100)
                         cv2.putText(annotated_frame, f'Objects: {len(detections)}', (10, info_y),
-                                  cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE * 0.7, (0, 255, 0), LINE_THICKNESS)
+                                  cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE * 0.7, color, LINE_THICKNESS)
                         info_y += 30
                     
                     # 显示窗口标识
                     window_id = window_name[-1]  # 获取窗口编号
-                    cv2.putText(annotated_frame, f'Window {window_id}', (10, info_y),
-                              cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE * 0.7, (255, 255, 0), LINE_THICKNESS)
+                    if current_exclusive_mode and window_name == active_window:
+                        color = (0, 255, 255)  # 活跃窗口用亮色
+                        status = f'Window {window_id} [ACTIVE]'
+                    elif current_exclusive_mode:
+                        color = (100, 100, 100)  # 非活跃窗口用暗色
+                        status = f'Window {window_id} [WAITING]'
+                    else:
+                        color = (255, 255, 0)  # 普通模式用黄色
+                        status = f'Window {window_id}'
+                    
+                    cv2.putText(annotated_frame, status, (10, info_y),
+                              cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE * 0.7, color, LINE_THICKNESS)
+                    
+                    # 显示独占模式状态
+                    mode_text = "EXCLUSIVE" if current_exclusive_mode else "NORMAL"
+                    cv2.putText(annotated_frame, f'Mode: {mode_text}', (10, annotated_frame.shape[0] - 40),
+                              cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE * 0.5, (255, 255, 255), LINE_THICKNESS)
                     
                     # 显示置信度阈值
                     cv2.putText(annotated_frame, f'Confidence: {self.confidence_threshold:.2f}', 
@@ -372,7 +496,7 @@ class YoloV8Detector:
                               cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE * 0.5, (0, 255, 0), LINE_THICKNESS)
                     
                     # 更新总检测数
-                    total_detections[window_name] = len(detections)
+                    total_detections[window_name] = len(result["detections"])  # 使用原始检测数
                     
                     # 显示图像
                     cv2.imshow(WINDOW_TITLES[window_name], annotated_frame)
@@ -387,16 +511,31 @@ class YoloV8Detector:
                     for window_name, result in window_results.items():
                         window_id = window_name[-1]
                         filename = f'detection_window{window_id}_{timestamp}.{SAVE_FORMAT}'
-                        if SAVE_FORMAT.lower() == 'jpg':
-                            cv2.imwrite(filename, result["frame"], [cv2.IMWRITE_JPEG_QUALITY, SAVE_QUALITY])
+                        # 根据模式保存对应的图像
+                        if current_exclusive_mode and active_window and window_name == active_window:
+                            save_frame = result["frame"]
+                        elif current_exclusive_mode:
+                            save_frame = self.create_black_screen(FRAME_WIDTH, FRAME_HEIGHT, window_name)
                         else:
-                            cv2.imwrite(filename, result["frame"])
+                            save_frame = result["frame"]
+                            
+                        if SAVE_FORMAT.lower() == 'jpg':
+                            cv2.imwrite(filename, save_frame, [cv2.IMWRITE_JPEG_QUALITY, SAVE_QUALITY])
+                        else:
+                            cv2.imwrite(filename, save_frame)
                     print(f"📸 已保存所有窗口图像 ({timestamp})")
                 elif key == ord('c'):
                     # 清除控制台
                     os.system('cls' if os.name == 'nt' else 'clear')
                     print("🎯 三窗口实时检测运行中...")
-                    print(f"📊 当前检测统计: W1={total_detections['window1']}, W2={total_detections['window2']}, W3={total_detections['window3']}")
+                    if current_exclusive_mode:
+                        print(f"� 独占模式: 当前活跃窗口 - {active_window if active_window else '无'}")
+                    print(f"�📊 当前检测统计: W1={total_detections['window1']}, W2={total_detections['window2']}, W3={total_detections['window3']}")
+                elif key == ord('e'):
+                    # 切换独占显示模式
+                    current_exclusive_mode = not current_exclusive_mode
+                    mode_name = "独占模式" if current_exclusive_mode else "普通模式"
+                    print(f"🔄 已切换到{mode_name}")
                 elif key == ord('1'):
                     # 切换到窗口1
                     cv2.setWindowProperty(WINDOW_TITLES["window1"], cv2.WND_PROP_TOPMOST, 1)
