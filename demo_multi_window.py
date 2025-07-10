@@ -37,8 +37,11 @@ def test_categorization():
     
     for class_name in test_classes:
         window = detector.categorize_detection(class_name)
-        window_id = window[-1]
-        print(f"  {class_name} -> 窗口{window_id}")
+        if window is not None:
+            window_id = window[-1]
+            print(f"  {class_name} -> 窗口{window_id}")
+        else:
+            print(f"  {class_name} -> ❌ 不显示（未在指定类别中）")
 
 def create_demo_image():
     """创建演示图像"""

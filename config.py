@@ -29,6 +29,7 @@ save_quality = 95  # 保存图像质量 (1-100)
 skip_frames = 0  # 跳过帧数，用于提高性能，0表示不跳过
 
 # 多窗口分类设置
+# 只有在此处指定的类别会被检测并显示，其他类别即使被检测到也不会显示
 window_categories = {
     "window1": ["person", "train"],  # 第一个窗口：人、火车
     "window2": ["cell phone", "cup", "car"],  # 第二个窗口：手机、杯子、汽车

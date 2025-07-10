@@ -134,16 +134,15 @@ class YoloV8Detector:
             class_name (str): 检测到的类别名称
             
         Returns:
-            str: 窗口名称 (window1, window2, window3)
+            str or None: 窗口名称 (window1, window2, window3) 或 None (不显示)
         """
         # 检查是否属于特定窗口的类别
         for window_name, categories in WINDOW_CATEGORIES.items():
             if class_name in categories:
                 return window_name
         
-        # 如果不在指定类别中，随机分配到三个窗口之一
-        import random
-        return random.choice(["window1", "window2", "window3"])
+        # 如果不在指定类别中，返回None（不显示）
+        return None
         
     def detect_multi_window(self, frame):
         """
@@ -182,18 +181,20 @@ class YoloV8Detector:
                         # 确定应该显示在哪个窗口
                         target_window = self.categorize_detection(class_name)
                         
-                        # 保存检测结果
-                        detection_info = {
-                            'class': class_name,
-                            'confidence': conf,
-                            'bbox': [x1, y1, x2, y2],
-                            'color': self.colors[int(cls_id) % len(self.colors)]
-                        }
-                        
-                        window_results[target_window]["detections"].append(detection_info)
-                        
-                        # 在对应窗口的图像上绘制检测框
-                        self.draw_detection(window_results[target_window]["frame"], detection_info)
+                        # 只处理在指定类别中的检测结果
+                        if target_window is not None:
+                            # 保存检测结果
+                            detection_info = {
+                                'class': class_name,
+                                'confidence': conf,
+                                'bbox': [x1, y1, x2, y2],
+                                'color': self.colors[int(cls_id) % len(self.colors)]
+                            }
+                            
+                            window_results[target_window]["detections"].append(detection_info)
+                            
+                            # 在对应窗口的图像上绘制检测框
+                            self.draw_detection(window_results[target_window]["frame"], detection_info)
         
         return window_results
         
