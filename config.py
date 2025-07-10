@@ -27,3 +27,24 @@ save_quality = 95  # 保存图像质量 (1-100)
 
 # 性能设置
 skip_frames = 0  # 跳过帧数，用于提高性能，0表示不跳过
+
+# 多窗口分类设置
+window_categories = {
+    "window1": ["person", "train"],  # 第一个窗口：人、火车
+    "window2": ["cell phone", "cup", "car"],  # 第二个窗口：手机、杯子、汽车
+    "window3": ["laptop", "keyboard", "tv", "mouse", "remote"]  # 第三个窗口：电脑、键盘等
+}
+
+# 窗口显示设置
+window_titles = {
+    "window1": "Window 1 - Person & Train",
+    "window2": "Window 2 - Phone & Cup & Car", 
+    "window3": "Window 3 - Computer & Keyboard"
+}
+
+# 窗口位置设置 (x, y)
+window_positions = {
+    "window1": (50, 50),
+    "window2": (700, 50),
+    "window3": (350, 400)
+}
