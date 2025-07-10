@@ -52,6 +52,10 @@ window_positions = {
 
 # 独占显示设置
 exclusive_display = True  # 是否启用独占显示模式
-exclusive_priority = ["window1", "window2", "window3"]  # 优先级顺序，当多个窗口都有检测时的显示优先级
+# 独占显示逻辑：
+# - 每个窗口独立判断：如果该窗口检测到对应类别就显示，没有检测到就黑屏
+# - 多个窗口可以同时显示检测结果
+# - 只有当某个窗口没有检测到任何指定类别时才显示黑屏
+exclusive_priority = ["window1", "window2", "window3"]  # 优先级顺序（保留兼容性，实际不再使用）
 black_screen_text = "No Detection"  # 黑屏时显示的文本
 show_waiting_message = True  # 是否在黑屏时显示等待消息
