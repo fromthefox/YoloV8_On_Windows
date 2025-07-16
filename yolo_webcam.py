@@ -520,15 +520,15 @@ class YOLODetector:
                     mode_name = "独占模式" if current_exclusive_mode else "普通模式"
                     print(f"🔄 已切换到{mode_name}")
                 elif key == ord('1'):
-                    # 切换到窗口1
+                    #  查询模型1服务节点
                     cv2.setWindowProperty(WINDOW_TITLES["window1"], cv2.WND_PROP_TOPMOST, 1)
                     print("🎯 切换到窗口1焦点")
                 elif key == ord('2'):
-                    # 切换到窗口2
+                    #  查询模型2服务节点
                     cv2.setWindowProperty(WINDOW_TITLES["window2"], cv2.WND_PROP_TOPMOST, 1)
                     print("🎯 切换到窗口2焦点")
                 elif key == ord('3'):
-                    # 切换到窗口3
+                    #  查询模型3服务节点
                     cv2.setWindowProperty(WINDOW_TITLES["window3"], cv2.WND_PROP_TOPMOST, 1)
                     print("🎯 切换到窗口3焦点")
                 elif key == ord('+') or key == ord('='):
