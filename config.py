@@ -6,7 +6,7 @@ model_name = "yolov8n.pt"  # 可选: yolov8n.pt, yolov8s.pt, yolov8m.pt, yolov8l
 device = "cpu"  # 设备类型，目前只支持cpu
 
 # 摄像头设置
-camera_id = 1  # 摄像头ID，0为默认摄像头，如果有多个摄像头可以尝试1、2等
+camera_id = 0  # 摄像头ID，0为默认摄像头，如果有多个摄像头可以尝试1、2等
 frame_width = 640  # 摄像头分辨率宽度
 frame_height = 480  # 摄像头分辨率高度
 fps = 30  # 摄像头帧率
