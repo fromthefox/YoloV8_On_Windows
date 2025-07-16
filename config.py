@@ -32,7 +32,7 @@ skip_frames = 0  # 跳过帧数，用于提高性能，0表示不跳过
 # 只有在此处指定的类别会被检测并显示，其他类别即使被检测到也不会显示
 window_categories = {
     "window1": ["person", "handbag", "backpack", "suitcase"],  # 第一个窗口：人、火车
-    "window2": ["train"],  # 第二个窗口：手机、杯子、汽车
+    "window2": ["keyboard", "cell phone"],  # 第二个窗口：手机、杯子、汽车
     "window3": ["laptop", "tv"]  # 第三个窗口：电脑、键盘等
 }
 

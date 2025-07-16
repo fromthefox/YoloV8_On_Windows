@@ -312,12 +312,12 @@ class YOLODetector:
         
         if results and len(results) > 0:
             result = results[0]
-            
-            # 获取检测框
+            # 查询模型1服务节点
+            # 获取模型1的监测框
             if result.boxes is not None:
-                boxes = result.boxes.xyxy.cpu().numpy()  # 边界框坐标
-                confidences = result.boxes.conf.cpu().numpy()  # 置信度
-                class_ids = result.boxes.cls.cpu().numpy()  # 类别ID
+                boxes = result.boxes.xyxy.cpu().numpy()  
+                confidences = result.boxes.conf.cpu().numpy()  
+                class_ids = result.boxes.cls.cpu().numpy()  
                 
                 for i, (box, conf, cls_id) in enumerate(zip(boxes, confidences, class_ids)):
                     if conf > self.confidence_threshold:
